@@ -3,4 +3,6 @@
 
 A simple command-line interface to download (and compile) Nintendo Switch homebrew / hacking tools.
 
-[Inspired by SDSetup](https://github.com/noahc3/SDSetup)
+[Original Logo Image / Icon](https://github.com/oojmed/NXSSetup/logo/original.png) by [hax4dayz](https://github.com/hax4dazy) (further edited by us).
+
+[Inspired by SDSetup](https://github.com/noahc3/SDSetup).

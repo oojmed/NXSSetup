@@ -2,7 +2,7 @@
 
 major=0
 minor=2
-patch=0
+patch="0-dev"
 
 build=$(cat buildnumber)
 build=$((build+1))
