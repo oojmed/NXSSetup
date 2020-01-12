@@ -41,8 +41,8 @@ fn build_info() -> String {
 }
 
 fn title() -> String {
-    let name_start = utils::for_rgb(colors::RED.0, colors::RED.1, colors::RED.2, "NX");
-    let name_end = utils::for_rgb(colors::BLUE.0, colors::BLUE.1, colors::BLUE.2, "SSetup");
+    let name_start = utils::for_rgb(colors::BLUE.0, colors::BLUE.1, colors::BLUE.2, "NX");
+    let name_end = utils::for_rgb(colors::RED.0, colors::RED.1, colors::RED.2, "SSetup");
     let name = utils::bold(&(name_start + name_end.as_str()));
 
     let version_text = utils::italic(&("v".to_string() + VERSION + " " + build_info().as_str()));

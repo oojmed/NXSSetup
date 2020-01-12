@@ -515,7 +515,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "nxssetup"
-version = "0.1.0-84"
+version = "0.1.0-86"
 dependencies = [
  "crossterm 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "num_cpus 1.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
