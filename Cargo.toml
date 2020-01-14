@@ -1,6 +1,6 @@
 [package]
 name = "nxssetup"
-version = "0.2.0-dev-88"
+version = "0.2.0-dev-90"
 authors = ["Oojmed"]
 edition = "2018"
 

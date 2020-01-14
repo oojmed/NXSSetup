@@ -21,6 +21,7 @@ pub fn clone(repo: &str, dir: &str) -> std::io::Result<()> {
 
 pub fn make(dir: &str, make_args: &str) -> std::io::Result<()> {
     let threads = num_cpus::get();
+
     let mut output = Command::new("make").args(make_args.split(' ')).arg(format!("-j{}", threads)).current_dir(dir).stdout(Stdio::inherit()).stderr(Stdio::inherit()).spawn()?; //.output()?;
 
     output.wait();
@@ -30,6 +31,14 @@ pub fn make(dir: &str, make_args: &str) -> std::io::Result<()> {
     } else {
         println!("{}", String::from_utf8(output.stdout).unwrap());
     }*/
+
+    Ok(())
+}
+
+pub fn run(cmd: &str, args: &str) -> std::io::Result<()> {
+    let mut output = Command::new(cmd).args(args.split(' ')).stdout(Stdio::inherit()).stderr(Stdio::inherit()).spawn()?;
+
+    output.wait();
 
     Ok(())
 }
@@ -45,7 +54,7 @@ pub fn build(builditem: BuildItem, make_args: &str) {
 
     utils::clear();
 
-    println!("Building...");
+    println!("Building... (make {})", make_args);
 
     make(dir.as_str(), make_args);
 

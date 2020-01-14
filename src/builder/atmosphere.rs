@@ -9,6 +9,21 @@ use std::path;
 
 pub fn prepare() {
     release::get("atmosphere-nx/atmosphere", "build/atmosphere-release", 0);
+
+    if cfg!(windows) {
+        // Download zip binary because Atmo requires it in the makefile, otherwise it crashes
+        // VirusTotal for the URL / binary: https://www.virustotal.com/gui/url/e0367d7eca1a360907afe4d97fed5ae1ee63642149630f5bfbd137f23aeba6b8/detection
+
+        println!("Downloading zip(.exe) binary as Atmosphere's Makefile depends on it");
+
+        release::download("https://github.com/bmatzelle/gow/raw/master/bin/zip.exe", "build/zip.exe");
+
+        let working_dir_raw = env::current_dir().unwrap();
+        let working_dir = working_dir_raw.to_str().unwrap();
+
+        println!("SET PATH=%PATH%;{}\\build", working_dir);
+        generic::run("SET", format!("PATH=%PATH%;{}\\build", working_dir).as_str());
+    }
 }
 
 pub fn build() {
@@ -19,7 +34,12 @@ pub fn build() {
     let working_dir_raw = env::current_dir().unwrap();
     let working_dir = working_dir_raw.to_str().unwrap();
 
-    let make_args = format!("SEPT_00_ENC_PATH={}/build/atmosphere-release/sept/sept-secondary_00.enc SEPT_01_ENC_PATH={}/build/atmosphere-release/sept/sept-secondary_01.enc", working_dir, working_dir);
+    let make_args: String = if cfg!(windows) {
+        format!("SEPT_00_ENC_PATH={}\\build\\atmosphere-release\\sept\\sept-secondary_00.enc SEPT_01_ENC_PATH={}\\build\\atmosphere-release\\sept\\sept-secondary_01.enc", working_dir, working_dir)
+    } else {
+        format!("SEPT_00_ENC_PATH={}/build/atmosphere-release/sept/sept-secondary_00.enc SEPT_01_ENC_PATH={}/build/atmosphere-release/sept/sept-secondary_01.enc", working_dir, working_dir)
+    };
+
     generic::build(builditem, make_args.as_str());
 
     utils::clear();
