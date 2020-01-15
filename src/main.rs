@@ -87,8 +87,8 @@ fn show_start() {
     before_show();
 
     let mut method = window::new("Method", "regular", vec![
-        checkbox::new("Self-build (download and compile yourself)", false, false, true),
-        checkbox::new("Pre-built (download official releases)", false, false, true) ]);
+        checkbox::new("Self-build (download and compile yourself)".to_string(), false, false, true),
+        checkbox::new("Pre-built (download official releases)".to_string(), false, false, true) ]);
 
     input(method, 1);
 
@@ -122,20 +122,20 @@ fn show_self_warning() {
     before_show();
 
     let mut self_warn = window::new("Self-build Warning", "warning", vec![
-        checkbox::new("Self-building requires some programs and tools.", false, false, false),
-        checkbox::new("This is for advanced and technical users only.", false, false, false),
-        checkbox::new("", false, false, false),
-        checkbox::new("Continue", false, false, true),
-        checkbox::new("Return", false, false, true) ]);
+        checkbox::new("Self-building requires some programs and tools.".to_string(), false, false, false),
+        checkbox::new("This is for advanced and technical users only.".to_string(), false, false, false),
+        checkbox::new("".to_string(), false, false, false),
+        checkbox::new("Continue".to_string(), false, false, true),
+        checkbox::new("Return".to_string(), false, false, true) ]);
 
     input(self_warn, 2);
 
     unsafe {
         if checkbox::CHOSEN[1] == "Continue" {
-            checkbox::CHOSEN[1] = "";
+            checkbox::CHOSEN[1] = "".to_string();
             show_cfw();
         } else {
-            checkbox::CHOSEN = ["", "", "", "", "", "", "", "", "", ""];
+            checkbox::CHOSEN = ["".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string()];
             show_start();
         }
     }
@@ -145,8 +145,8 @@ fn show_cfw() {
     before_show();
 
     let mut cfw = window::new("Choose CFW", "regular", vec![
-        checkbox::new("Atmosphère", false, false, true),
-        checkbox::new("None", false, false, true) ]);
+        checkbox::new("Atmosphère".to_string(), false, false, true),
+        checkbox::new("None".to_string(), false, false, true) ]);
 
     input(cfw, 3);
 
@@ -163,13 +163,32 @@ fn show_cfw() {
         } else if checkbox::CHOSEN[1] == "None" {
             // just continue
         } else { // pressed back
-            checkbox::CHOSEN = ["", "", "", "", "", "", "", "", "", ""];
+            checkbox::CHOSEN = ["".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string()];
             show_start();
         }
     }
 }
 
-fn input(mut window: Box<window::Window<'static>>, current: i32) {
+fn show_end() {
+    before_show();
+
+    unsafe {
+        let mut end = window::new("Finished", "regular", vec![
+            checkbox::new("NXSSetup has finished. See below for the actions NXSSetup has done:".to_string(), false, false, false),
+            checkbox::new("".to_string(), false, false, false),
+            
+            checkbox::new(format!("CFW: {} {}", if SELF_BUILD { "Self built" } else { "Downloaded" }, checkbox::CHOSEN[1]), false, false, false),
+            
+            checkbox::new("".to_string(), false, false, false),
+            checkbox::new("Click here (or press an exit key) to quit".to_string(), false, false, true)
+        ]);
+
+        input(end, 999);
+    }
+}
+
+
+fn input<'a>(mut window: Box<window::Window<'a>>, current: i32) {
     let stdin = stdin();
     let mut stdout = MouseTerminal::from(stdout().into_raw_mode().unwrap());
 
@@ -266,6 +285,8 @@ fn main() {
     utils::hide_cursor();
 
     show_start(); // calibrate();
+
+    show_end();
 
     utils::clear();
 

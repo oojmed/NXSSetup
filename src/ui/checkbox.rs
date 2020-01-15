@@ -6,20 +6,20 @@ use crate::ui::window;
 extern crate termion;
 extern crate crossterm;
 
-pub static mut CHOSEN: [&'static str; 10] = ["", "", "", "", "", "", "", "", "", ""];
+pub static mut CHOSEN: [String; 10] = [String::new(), String::new(), String::new(), String::new(), String::new(), String::new(), String::new(), String::new(), String::new(), String::new()];
 
-pub fn new(text: &str, checked: bool, show_check: bool, interactable: bool) -> Box<Checkbox> {
+pub fn new(text: String, checked: bool, show_check: bool, interactable: bool) -> Box<Checkbox> {
     return Box::new(Checkbox { x: 0, y: 0, checked: checked, show_check: show_check, interactable: interactable, selected: false, text: text, collider: collider::new(1, 1, 2, 2) });
 }
 
-pub struct Checkbox<'a> {
+pub struct Checkbox {
     pub checked: bool,
     pub show_check: bool,
     pub interactable: bool,
 
     pub selected: bool,
 
-    pub text: &'a str,
+    pub text: String,
 
     pub collider: Box<collider::Collider>,
 
@@ -27,7 +27,7 @@ pub struct Checkbox<'a> {
     pub y: i32
 }
 
-impl Checkbox<'_> {
+impl Checkbox {
     pub fn check(& mut self) {
         self.checked = true;
     }
@@ -76,9 +76,9 @@ impl Checkbox<'_> {
     }
 }
 
-impl crate::ui::Render for Checkbox<'_> {
+impl crate::ui::Render for Checkbox {
     fn render(& mut self) {
-        let italic_text = utils::italic(self.text);
+        let italic_text = utils::italic(self.text.as_str());
 
         if self.show_check {
             print!("{}", utils::back_rgb(window::COLOR_BACKGROUND.0, window::COLOR_BACKGROUND.1, window::COLOR_BACKGROUND.2,
@@ -87,15 +87,15 @@ impl crate::ui::Render for Checkbox<'_> {
                     } else {
                         utils::for_rgb(200, 20, 20, "✗")
                     },
-                    if self.interactable { italic_text.as_str() } else { self.text }).as_str()));
+                    if self.interactable { italic_text } else { self.text.clone() }).as_str()));
         } else {
             print!("{}", utils::back_rgb(window::COLOR_BACKGROUND.0, window::COLOR_BACKGROUND.1, window::COLOR_BACKGROUND.2,
-                if self.interactable { italic_text.as_str() } else { self.text }));
+                if self.interactable { italic_text.as_str() } else { self.text.as_str() }));
         }
     }
 }
 
-impl crate::ui::Interact for Checkbox<'static> {
+impl crate::ui::Interact for Checkbox {
     fn interact(& mut self) {
         if !self.interactable {
             return;
@@ -106,9 +106,9 @@ impl crate::ui::Interact for Checkbox<'static> {
         unsafe {
             for i in 0..CHOSEN.len() {
                 if CHOSEN[i] == self.text && !self.checked {
-                    CHOSEN[i] = &"";
+                    CHOSEN[i] = "".to_string();
                 } else if CHOSEN[i] == "" && self.checked {
-                    CHOSEN[i] = self.text;
+                    CHOSEN[i] = self.text.clone();
                     break;
                 }
             }

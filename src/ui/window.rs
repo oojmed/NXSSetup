@@ -4,7 +4,7 @@ use crate::ui::checkbox;
 extern crate termion;
 extern crate crossterm;
 
-pub fn new<'a>(title_str: &'a str, window_type: &'a str, checkboxes: Vec<Box<checkbox::Checkbox<'a>>>) -> Box<Window<'a>> {
+pub fn new<'a>(title_str: &'a str, window_type: &'a str, checkboxes: Vec<Box<checkbox::Checkbox>>) -> Box<Window<'a>> {
     let padding: i32 = 2;
 
     let (o_term_width, o_term_height) = termion::terminal_size().unwrap();
@@ -43,7 +43,7 @@ pub fn new<'a>(title_str: &'a str, window_type: &'a str, checkboxes: Vec<Box<che
 }
 
 pub struct Window<'a> {
-    pub checkboxes: Vec<Box<checkbox::Checkbox<'a>>>,
+    pub checkboxes: Vec<Box<checkbox::Checkbox>>,
     pub title: &'a str,
     pub window_type: &'a str,
     
