@@ -6,24 +6,6 @@ on:
 name: Publish on Push
 
 jobs:
-  preprocess:
-    name: Preprocess
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: ${{ github.ref }}
-        body: |
-          TODO
-        draft: true
-        prerelease: true
-
   publish:
     name: Publish for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -33,13 +15,13 @@ jobs:
         include:
           - os: ubuntu-latest
             artifact_name: nxssetup
-            asset_name: nxssetup-linux-amd64
+            asset_name: nxssetup-${{ github.ref }}.x86_64
           - os: windows-latest
             artifact_name: nxssetup.exe
-            asset_name: nxssetup-windows-amd64
+            asset_name: nxssetup-${{ github.ref }}.exe
           - os: macos-latest
             artifact_name: nxssetup
-            asset_name: nxssetup-macos-amd64
+            asset_name: nxssetup-${{ github.ref }}
 
     steps:
     - uses: actions/checkout@v1
