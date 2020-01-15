@@ -29,6 +29,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
         include:
           - os: ubuntu-latest
             artifact_name: nxssetup
