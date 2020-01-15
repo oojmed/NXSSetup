@@ -1,0 +1,61 @@
+on:
+  push:
+    tags:
+      - 'v*'
+
+name: Publish on Push
+
+jobs:
+  preprocess:
+    name: Preprocess
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: ${{ github.ref }}
+        body: |
+          TODO
+        draft: true
+        prerelease: true
+
+  publish:
+    name: Publish for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: nxssetup
+            asset_name: nxssetup-linux-amd64
+          - os: windows-latest
+            artifact_name: nxssetup.exe
+            asset_name: nxssetup-windows-amd64
+          - os: macos-latest
+            artifact_name: nxssetup
+            asset_name: nxssetup-macos-amd64
+
+    steps:
+    - uses: actions/checkout@v1
+      name: Checkout Master
+      
+    - uses: actions-rs/toolchain@v1
+      name: Install latest nightly
+      with:
+        toolchain: nightly
+        default: true
+
+    - name: Build
+      run: cargo build --release --locked
+    - name: Upload binaries to release
+      uses: svenstaro/upload-release-action@v1-release
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: target/release/${{ matrix.artifact_name }}
+        asset_name: ${{ matrix.asset_name }}
+        tag: ${{ github.ref }}
