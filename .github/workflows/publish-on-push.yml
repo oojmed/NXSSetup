@@ -15,15 +15,19 @@ jobs:
         include:
           - os: ubuntu-latest
             artifact_name: nxssetup
-            asset_name: nxssetup-${{ github.ref }}.x86_64
+            asset_name: nxssetup-${{ steps.get_version.outputs.VERSION }}.x86_64
           - os: windows-latest
             artifact_name: nxssetup.exe
-            asset_name: nxssetup-${{ github.ref }}.exe
+            asset_name: nxssetup-${{ steps.get_version.outputs.VERSION }}.exe
           - os: macos-latest
             artifact_name: nxssetup
-            asset_name: nxssetup-${{ github.ref }}
+            asset_name: nxssetup-${{ steps.get_version.outputs.VERSION }}
 
     steps:
+    - name: Get Version from Tag
+      id: get_version
+      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+
     - uses: actions/checkout@v1
       name: Checkout Master
       
@@ -35,6 +39,7 @@ jobs:
 
     - name: Build
       run: cargo build --release --locked
+
     - name: Upload binaries to release
       uses: svenstaro/upload-release-action@v1-release
       with:
