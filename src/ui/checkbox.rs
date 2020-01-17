@@ -6,6 +6,8 @@ use crate::ui::window;
 extern crate termion;
 extern crate crossterm;
 
+extern crate strip_ansi_escapes;
+
 pub static mut CHOSEN: [String; 10] = [String::new(), String::new(), String::new(), String::new(), String::new(), String::new(), String::new(), String::new(), String::new(), String::new()];
 
 pub fn new(text: String, checked: bool, show_check: bool, interactable: bool) -> Box<Checkbox> {
@@ -96,9 +98,9 @@ impl crate::ui::Render for Checkbox {
 }
 
 impl crate::ui::Interact for Checkbox {
-    fn interact(& mut self) {
+    fn interact(& mut self) -> bool {
         if !self.interactable {
-            return;
+            return false;
         }
 
         self.toggle_checked();
@@ -108,7 +110,7 @@ impl crate::ui::Interact for Checkbox {
                 if CHOSEN[i] == self.text && !self.checked {
                     CHOSEN[i] = "".to_string();
                 } else if CHOSEN[i] == "" && self.checked {
-                    CHOSEN[i] = self.text.clone();
+                    CHOSEN[i] = String::from_utf8(strip_ansi_escapes::strip(self.text.clone()).unwrap()).unwrap();
                     break;
                 }
             }
@@ -117,5 +119,7 @@ impl crate::ui::Interact for Checkbox {
         }
 
         self.render();
+
+        return true;
     }
 }

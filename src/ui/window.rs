@@ -4,6 +4,8 @@ use crate::ui::checkbox;
 extern crate termion;
 extern crate crossterm;
 
+extern crate strip_ansi_escapes;
+
 pub fn new<'a>(title_str: &'a str, window_type: &'a str, checkboxes: Vec<Box<checkbox::Checkbox>>) -> Box<Window<'a>> {
     let padding: i32 = 2;
 
@@ -15,7 +17,7 @@ pub fn new<'a>(title_str: &'a str, window_type: &'a str, checkboxes: Vec<Box<che
     let mut width: i32 = title_str.chars().count() as i32;
 
     for c in &checkboxes {
-        let this_width: i32 = c.text.chars().count() as i32 + 2;
+        let this_width: i32 = String::from_utf8(strip_ansi_escapes::strip(c.text.clone()).unwrap()).unwrap().chars().count() as i32 + 2;
 
         if this_width > width {
             width = this_width;
@@ -105,7 +107,9 @@ impl crate::ui::Render for Window<'_> {
         }
 
         for i in 0..self.checkboxes.len() {
-            let mut padding = (self.width as usize - self.checkboxes[i].text.chars().count()) as f64 - 2.0;
+            let escaped_string = String::from_utf8(strip_ansi_escapes::strip(self.checkboxes[i].text.clone()).unwrap()).unwrap();
+            let mut padding = (self.width as usize - escaped_string.chars().count()) as f64 - 2.0;
+
             if self.checkboxes[i].show_check {
                 padding -= 2.0;
             }

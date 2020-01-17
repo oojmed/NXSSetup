@@ -33,6 +33,17 @@ pub fn check_outdir_exists() -> std::io::Result<()> {
 
     fs::create_dir("out")?;
 
+    let subdirs = vec!["payloads", "sd"];
+
+    for d in subdirs {
+        let p = "out/".to_string() + d;
+        if path::Path::new(&p).exists() {
+            fs::remove_dir_all(p.clone())?;
+        }
+    
+        fs::create_dir(&p)?;
+    }
+
     Ok(())
 }
 

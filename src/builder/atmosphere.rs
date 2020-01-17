@@ -40,12 +40,22 @@ pub fn build() {
         format!("SEPT_00_ENC_PATH={}/build/atmosphere-release/sept/sept-secondary_00.enc SEPT_01_ENC_PATH={}/build/atmosphere-release/sept/sept-secondary_01.enc", working_dir, working_dir)
     };
 
-    generic::build(builditem, make_args.as_str());
+    let dist_make_arg = unsafe { if crate::DEBUG { "dist" } else { "dist-no-debug" }};
 
-    utils::clear();
+    println!("{}", dist_make_arg);
+
+    generic::build(builditem, (dist_make_arg.to_string() + " " + make_args.as_str()).as_str());
+
+    /*utils::clear();
     println!("Building dist...");
 
-    generic::make("build/atmosphere", format!("dist {}", make_args).as_str());
+    unsafe {
+        if crate::DEBUG {
+            generic::make("build/atmosphere", format!("dist {}", make_args).as_str());
+        } else {
+            generic::make("build/atmosphere", format!("dist-no-debug {}", make_args).as_str());
+        }
+    }*/
 
     utils::clear();
     process();
@@ -62,13 +72,13 @@ pub fn process() -> std::io::Result<()> {
     
         let extension = path_p.extension().unwrap();
         if extension == "zip" {
-            println!("File is a zip archive, extracting to out/atmosphere");
-            release::unzip(path.to_str().unwrap(), "out/atmosphere");
+            println!("File is a zip archive, extracting to out/sd");
+            release::unzip(path.to_str().unwrap(), "out/sd");
         }
 
         if extension == "bin" {
-            println!("File is a payload, copying to out/");
-            fs::copy(path_p, format!("out/{}", path_p.file_name().unwrap().to_str().unwrap()))?;
+            println!("File is a payload, copying to out/payloads/");
+            fs::copy(path_p, format!("out/payloads/{}", path_p.file_name().unwrap().to_str().unwrap()))?;
         }
     }
 

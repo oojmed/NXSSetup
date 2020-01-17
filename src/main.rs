@@ -1,6 +1,7 @@
 mod ui;
 mod options;
 mod builder;
+mod exporter;
 
 use ui::prelude::*;
 use builder::prelude::*;
@@ -16,6 +17,7 @@ use std::io::{Write, stdout, stdin};
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
 pub static mut SELF_BUILD: bool = true;
+pub static mut DEBUG: bool = true;
 
 fn build_info() -> String {
     let arch = if cfg!(target_arch = "x86_64") { "x86_64" }
@@ -90,27 +92,12 @@ fn show_start() {
         checkbox::new("Self-build (download and compile yourself)".to_string(), false, false, true),
         checkbox::new("Pre-built (download official releases)".to_string(), false, false, true) ]);
 
-    input(method, 1);
+    input(method);
 
     unsafe {
-        if checkbox::CHOSEN[0] == "Self-build (download and compile yourself)" {
+        if check_last_chosen("Self-build (download and compile yourself)") {
             show_self_warning();
-        } else if checkbox::CHOSEN[0] == "Pre-built (download official releases)" {
-            /*let mut pre_error = window::new("Pre-built Error", "error", vec![
-                checkbox::new("Only self-building is supported in the current version of NXSSetup.", false, false, false),
-                checkbox::new("", false, false, false),
-                checkbox::new("Return", false, false, true),
-                checkbox::new("Exit", false, false, true) ]);
-
-            input(pre_error, 2);
-
-            if checkbox::CHOSEN[1] == "Exit" {
-                return;
-            } else {
-                checkbox::CHOSEN = ["", "", "", "", "", "", "", "", "", ""];
-                show_start();
-            }*/
-
+        } else if check_last_chosen("Pre-built (download official releases)") {
             SELF_BUILD = false;
 
             show_cfw();
@@ -128,16 +115,34 @@ fn show_self_warning() {
         checkbox::new("Continue".to_string(), false, false, true),
         checkbox::new("Return".to_string(), false, false, true) ]);
 
-    input(self_warn, 2);
+    input(self_warn);
 
     unsafe {
-        if checkbox::CHOSEN[1] == "Continue" {
+        if check_last_chosen("Continue") {
             checkbox::CHOSEN[1] = "".to_string();
-            show_cfw();
+            show_debug();
         } else {
             checkbox::CHOSEN = ["".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string()];
             show_start();
         }
+    }
+}
+
+fn show_debug() {
+    before_show();
+
+    let mut debug = window::new("Debug", "regular", vec![
+        checkbox::new("Debug Builds".to_string(), false, false, true),
+        checkbox::new("Release (No Debug) Builds".to_string(), false, false, true) ]);
+
+    input(debug);
+
+    unsafe {
+        if check_last_chosen("Release (No Debug) Builds") {
+            DEBUG = false;
+        }
+
+        show_cfw();
     }
 }
 
@@ -148,20 +153,24 @@ fn show_cfw() {
         checkbox::new("Atmosphère".to_string(), false, false, true),
         checkbox::new("None".to_string(), false, false, true) ]);
 
-    input(cfw, 3);
+    input(cfw);
 
     unsafe {
-        if checkbox::CHOSEN[1] == "Atmosphère" {
+        if check_last_chosen("Atmosphère") {
             builder::check_outdir_exists();
             builder::check_builddir_exists();
 
             if SELF_BUILD {
                 builder::build(builder::BuildItem { name: "Atmosphere", git: "https://github.com/Atmosphere-NX/Atmosphere.git" });
             } else {
-                release::get("atmosphere-nx/atmosphere", "out/atmosphere", 0);
+                release::get("atmosphere-nx/atmosphere", "out/sd", 0);
             }
-        } else if checkbox::CHOSEN[1] == "None" {
+
+            show_end();
+        } else if check_last_chosen("None") {
             // just continue
+
+            show_end();
         } else { // pressed back
             checkbox::CHOSEN = ["".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string()];
             show_start();
@@ -177,18 +186,57 @@ fn show_end() {
             checkbox::new("NXSSetup has finished. See below for the actions NXSSetup has done:".to_string(), false, false, false),
             checkbox::new("".to_string(), false, false, false),
             
-            checkbox::new(format!("CFW: {} {}", if SELF_BUILD { "Self built" } else { "Downloaded" }, checkbox::CHOSEN[1]), false, false, false),
+            checkbox::new(format!("CFW: {} {} {}", if SELF_BUILD { "Self built" } else { "Downloaded" }, if DEBUG { "(debug)" } else { "(no debug)" }, checkbox::CHOSEN[2]), false, false, false),
             
             checkbox::new("".to_string(), false, false, false),
-            checkbox::new("Click here (or press an exit key) to quit".to_string(), false, false, true)
+
+            //if !cfg!(windows) { checkbox::new(utils::bold(utils::for_rgb(20, 200, 20, "Export SD files to a device (experimental, overwrites)").as_str()), false, false, true) } else { checkbox::new(utils::strikethrough(utils::for_rgb(20, 200, 20, "Export SD files to a device (No Windows Support)").as_str()), false, false, false) },
+
+            checkbox::new(utils::bold(utils::for_rgb(colors::BLUE.0, colors::BLUE.1, colors::BLUE.2, "Export SD files to a directory (overwrites)").as_str()), false, false, true),
+            
+            checkbox::new("".to_string(), false, false, false),
+
+            checkbox::new(utils::bold(utils::for_rgb(colors::RED.0, colors::RED.1, colors::RED.2, "Exit").as_str()), false, false, true)
         ]);
 
-        input(end, 999);
+        input(end);
+
+        if check_last_chosen("Export SD files to a device (experimental, overwrites)") {
+            
+        } else if check_last_chosen("Export SD files to a directory (overwrites)") {
+            copy_dir();
+        } // Else exit (by continuing)
     }
 }
 
+fn copy_dir() {
+    utils::clear();
+    print!("Please enter the wanted directory / path: ");
 
-fn input<'a>(mut window: Box<window::Window<'a>>, current: i32) {
+    std::io::stdout().flush();
+
+    let mut input = String::new();
+    
+    std::io::stdin().read_line(&mut input).expect("Unable to get user input.");
+
+    input = input.trim().to_string();
+
+    println!("{:?}", input);
+
+    exporter::dir::export(input);
+}
+
+fn check_last_chosen(wanted: &str) -> bool {
+    let i = unsafe { checkbox::CHOSEN.iter().position(|s| s == "").unwrap() };
+
+    if i == 0 {
+        return false;
+    } else {
+        return unsafe { checkbox::CHOSEN[i - 1] == wanted };
+    }
+}
+
+fn input<'a>(mut window: Box<window::Window<'a>>) {
     let stdin = stdin();
     let mut stdout = MouseTerminal::from(stdout().into_raw_mode().unwrap());
 
@@ -224,10 +272,10 @@ fn input<'a>(mut window: Box<window::Window<'a>>, current: i32) {
                                 window.checkboxes[i].collider.check(x as i32, y as i32)).unwrap();
 
                             if window.checkboxes[i].collider.check(x as i32, y as i32) {
-                                window.checkboxes[i].interact();
-
-                                exit = true;
-                                break;
+                                if window.checkboxes[i].interact() {
+                                    exit = true;
+                                    break;
+                                }
                             }
                         }
                     },
@@ -282,11 +330,13 @@ fn main() {
 
     options::modifyOptions(new_options);
 
+    unsafe {
+        checkbox::CHOSEN = ["".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string()];
+    }
+
     utils::hide_cursor();
 
-    show_start(); // calibrate();
-
-    show_end();
+    show_start();
 
     utils::clear();
 

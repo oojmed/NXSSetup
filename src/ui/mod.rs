@@ -18,7 +18,7 @@ pub trait Render {
 }
 
 pub trait Interact {
-    fn interact(& mut self);
+    fn interact(& mut self) -> bool;
 }
 
 pub mod prelude {
