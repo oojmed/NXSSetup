@@ -15,13 +15,13 @@ jobs:
         include:
           - os: ubuntu-latest
             artifact_name: nxssetup
-            asset_name: nxssetup-${{ steps.get_version.outputs.VERSION }}.x86_64
+            asset_name: linux.x86_64
           - os: windows-latest
             artifact_name: nxssetup.exe
-            asset_name: nxssetup-${{ steps.get_version.outputs.VERSION }}.exe
+            asset_name: windows.exe
           - os: macos-latest
             artifact_name: nxssetup
-            asset_name: nxssetup-${{ steps.get_version.outputs.VERSION }}
+            asset_name: mac
 
     steps:
     - name: Get Version from Tag
@@ -45,5 +45,5 @@ jobs:
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: target/release/${{ matrix.artifact_name }}
-        asset_name: ${{ matrix.asset_name }}
+        asset_name: nxssetup-${{ steps.get_version.outputs.VERSION }}-${{ matrix.asset_name }}
         tag: ${{ github.ref }}
