@@ -1,4 +1,4 @@
-![NXSSetup Logo](https://raw.githubusercontent.com/oojmed/NXSSetup/master/logo/edited.png)
+![NXSSetup Logo](https://raw.githubusercontent.com/oojmed/NXSSetup/master/images/logo/logo_text.png)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://choosealicense.com/licenses/mit/l)
 
