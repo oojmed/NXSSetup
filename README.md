@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://choosealicense.com/licenses/mit/l)
 
-A simple command-line interface to download (and compile) Nintendo Switch homebrew / hacking tools.
+A simple text-based user interface to download (and compile) Nintendo Switch homebrew / hacking tools.
 
 [Logo](https://github.com/oojmed/NXSSetup/blob/master/images/logo) by [hax4dayz](https://github.com/hax4dazy).
 

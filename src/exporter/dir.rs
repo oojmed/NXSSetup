@@ -6,6 +6,11 @@ use std::io;
 extern crate walkdir;
 use walkdir::WalkDir;
 
+use std::process::{Command, Stdio};
+
+use crate::ui::utils;
+use std::io::{Write, stdout, stdin};
+
 fn copy_dir<P, Q>(from: P, from_str: String, to: Q) -> io::Result<u64> where P: AsRef<Path>, Q: AsRef<Path> {
     let to_buf = to.as_ref().to_path_buf();
     let iter = WalkDir::new(from);
@@ -48,8 +53,8 @@ fn copy_dir<P, Q>(from: P, from_str: String, to: Q) -> io::Result<u64> where P: 
     Ok(counter)
 }
 
-pub fn export(out: String) {
-    let working_dir_raw = env::current_dir().unwrap();
+pub fn export() { //pub fn export(out: String) {
+    /*let working_dir_raw = env::current_dir().unwrap();
     let working_dir = working_dir_raw.to_str().unwrap();
 
     println!("{}", working_dir);
@@ -58,5 +63,36 @@ pub fn export(out: String) {
 
     crate::ui::utils::clear();
 
-    println!("Exported to dir {} successfully", out.clone());
+    println!("Exported to dir {} successfully", out.clone());*/
+
+    let working_dir_raw = std::env::current_dir().unwrap();
+    let working_dir = working_dir_raw.to_str().unwrap();
+
+    if cfg!(windows) {
+        let mut cmds = "cd ".to_string() + working_dir + " & set /P dir=Please enter the wanted directory / path: & echo %dir% & xcopy out\\sd\\* %dir% /S /Y /I & pause";
+
+        println!("{}", cmds);
+
+        let mut foo = Command::new("cmd").arg("/c").arg("start").arg("cmd").arg("/c").arg(cmds)
+            .stdout(Stdio::inherit()).stderr(Stdio::inherit()).spawn().unwrap();
+        
+        foo.wait();
+    } else {
+        utils::clear();
+        print!("Please enter the wanted directory / path: ");
+
+        std::io::stdout().flush();
+
+        let mut input = String::new();
+    
+        std::io::stdin().read_line(&mut input).expect("Unable to get user input.");
+
+        input = input.trim().to_string();
+    
+        println!("{:?}", input);
+
+        copy_dir("out/sd/", "out/sd/".to_string(), input.clone()).unwrap();  
+        
+        println!("Exported to dir {} successfully", input.clone())
+    }
 }

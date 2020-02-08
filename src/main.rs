@@ -2,6 +2,7 @@ mod ui;
 mod options;
 mod builder;
 mod exporter;
+mod help;
 
 use ui::prelude::*;
 use builder::prelude::*;
@@ -18,6 +19,7 @@ const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
 pub static mut SELF_BUILD: bool = true;
 pub static mut DEBUG: bool = true;
+pub static mut CFW: &str = "None";
 
 fn build_info() -> String {
     let arch = if cfg!(target_arch = "x86_64") { "x86_64" }
@@ -42,7 +44,7 @@ fn build_info() -> String {
     return format!("{} {}", os, arch);
 }
 
-fn title() -> String {
+pub fn title() -> String {
     let name_start = utils::for_rgb(colors::BLUE.0, colors::BLUE.1, colors::BLUE.2, "NX");
     let name_end = utils::for_rgb(colors::RED.0, colors::RED.1, colors::RED.2, "SSetup");
     let name = utils::bold(&(name_start + name_end.as_str()));
@@ -55,30 +57,9 @@ fn title() -> String {
 fn top_message() {
     utils::clear();
 
-    println!("{}", utils::center(title().as_str(), format!("NXSSetup v{} {}", VERSION, build_info()).chars().count() as u16));
-    println!("");
-    println!("{}", utils::center((utils::bold(utils::for_rgb(colors::RED.0, colors::RED.1, colors::RED.2, "backspace or q").as_str()) + utils::italic(utils::for_rgb(colors::RED.0, colors::RED.1, colors::RED.2, " to go back").as_str()).as_str()).as_str(), 25));
-}
-
-fn help() {
-    println!("{}\n", title());
-
-    println!("{}
-    nxssetup [OPTIONS]
-    
-{}
-    {}          {}
-    {}       {}
-    {}          {}
-    {}        {}
-    
-{}",
-    utils::title("Usage"), utils::title("Options"),
-    utils::bold("-h, --help"), utils::italic("Shows help information (this)"),
-    utils::bold("-v, --version"), utils::italic("Shows the version and then exits"),
-    utils::bold("--no-color"), utils::italic("Run NXSSetup with no color"),
-    utils::bold("--no-styling"), utils::italic("Run NXSSetup with no styling (including color)"),
-    utils::bold("Either --no-color or --no-styling, both is not allowed"));
+    println!("{}", utils::center(title().as_str(), format!("NXSSetup v{} {}", VERSION, build_info()).chars().count() as u16, 1));
+    println!("{}{}", termion::cursor::Goto(1, 3), utils::center((utils::bold(utils::for_rgb(colors::RED.0, colors::RED.1, colors::RED.2, "backspace or q").as_str()) + utils::italic(utils::for_rgb(colors::RED.0, colors::RED.1, colors::RED.2, " to go back").as_str()).as_str()).as_str(), 25, 3));
+    println!("{}{}", termion::cursor::Goto(1, 4), utils::center((utils::bold(utils::for_rgb(colors::BLUE.0, colors::BLUE.1, colors::BLUE.2, "1-9").as_str()) + utils::italic(utils::for_rgb(colors::BLUE.0, colors::BLUE.1, colors::BLUE.2, " to choose an option").as_str()).as_str()).as_str(), 23, 4));
 }
 
 fn before_show() {
@@ -140,9 +121,14 @@ fn show_debug() {
     unsafe {
         if check_last_chosen("Release (No Debug) Builds") {
             DEBUG = false;
-        }
 
-        show_cfw();
+            show_cfw();
+        } else if check_last_chosen("Debug Builds") {
+            show_cfw();
+        } else { // Else user pressed back
+            checkbox::CHOSEN = ["".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string(), "".to_string()];
+            show_start();
+        }
     }
 }
 
@@ -151,12 +137,14 @@ fn show_cfw() {
 
     let mut cfw = window::new("Choose CFW", "regular", vec![
         checkbox::new("Atmosphère".to_string(), false, false, true),
-        checkbox::new("None".to_string(), false, false, true) ]);
+        checkbox::new("Skip".to_string(), false, false, true) ]);
 
     input(cfw);
 
     unsafe {
         if check_last_chosen("Atmosphère") {
+            CFW = "Atmosphère";
+
             builder::check_outdir_exists();
             builder::check_builddir_exists();
 
@@ -167,7 +155,9 @@ fn show_cfw() {
             }
 
             show_end();
-        } else if check_last_chosen("None") {
+        } else if check_last_chosen("Skip") {
+            CFW = "None";
+
             // just continue
 
             show_end();
@@ -179,6 +169,8 @@ fn show_cfw() {
 }
 
 fn show_end() {
+    let _guard = termion::init();
+
     before_show();
 
     unsafe {
@@ -186,8 +178,14 @@ fn show_end() {
             checkbox::new("NXSSetup has finished. See below for the actions NXSSetup has done:".to_string(), false, false, false),
             checkbox::new("".to_string(), false, false, false),
             
-            checkbox::new(format!("CFW: {} {} {}", if SELF_BUILD { "Self built" } else { "Downloaded" }, if DEBUG { "(debug)" } else { "(no debug)" }, checkbox::CHOSEN[2]), false, false, false),
-            
+            if CFW != "None" {
+                checkbox::new(format!("CFW: {} {}",
+                    if SELF_BUILD { "Self built ".to_string() + if DEBUG { "(debug)" } else { "(no debug)" }} else { "Downloaded".to_string() },
+                    CFW), false, false, false)
+            } else {
+                checkbox::new("CFW: Skipped (None)".to_string(), false, false, false)
+            },
+    
             checkbox::new("".to_string(), false, false, false),
 
             //if !cfg!(windows) { checkbox::new(utils::bold(utils::for_rgb(20, 200, 20, "Export SD files to a device (experimental, overwrites)").as_str()), false, false, true) } else { checkbox::new(utils::strikethrough(utils::for_rgb(20, 200, 20, "Export SD files to a device (No Windows Support)").as_str()), false, false, false) },
@@ -210,7 +208,11 @@ fn show_end() {
 }
 
 fn copy_dir() {
-    utils::clear();
+    exporter::dir::export();
+
+    //show_end();
+
+    /*utils::clear();
     print!("Please enter the wanted directory / path: ");
 
     std::io::stdout().flush();
@@ -223,7 +225,7 @@ fn copy_dir() {
 
     println!("{:?}", input);
 
-    exporter::dir::export(input);
+    exporter::dir::export(input);*/
 }
 
 fn check_last_chosen(wanted: &str) -> bool {
@@ -233,6 +235,17 @@ fn check_last_chosen(wanted: &str) -> bool {
         return false;
     } else {
         return unsafe { checkbox::CHOSEN[i - 1] == wanted };
+    }
+}
+
+fn num_input(n: usize, checkboxes: &mut [Box<checkbox::Checkbox>]) -> bool {
+    let mut interactables = checkboxes.iter_mut().filter(|c| c.interactable);
+
+    let checkbox = interactables.nth(n);
+
+    match checkbox {
+        None => return false,
+        Some(x) => return x.interact()
     }
 }
 
@@ -260,16 +273,62 @@ fn input<'a>(mut window: Box<window::Window<'a>>) {
 
             },
 
+            Event::Key(Key::Char('1')) => {
+                if num_input(0, &mut window.checkboxes) {
+                    break;
+                }
+            },
+            Event::Key(Key::Char('2')) => {
+                if num_input(1, &mut window.checkboxes) {
+                    break;
+                }
+            },
+            Event::Key(Key::Char('3')) => {
+                if num_input(2, &mut window.checkboxes) {
+                    break;
+                }
+            },
+            Event::Key(Key::Char('4')) => {
+                if num_input(3, &mut window.checkboxes) {
+                    break;
+                }
+            },
+            Event::Key(Key::Char('5')) => {
+                if num_input(4, &mut window.checkboxes) {
+                    break;
+                }
+            },
+            Event::Key(Key::Char('6')) => {
+                if num_input(5, &mut window.checkboxes) {
+                    break;
+                }
+            },
+            Event::Key(Key::Char('7')) => {
+                if num_input(6, &mut window.checkboxes) {
+                    break;
+                }
+            },
+            Event::Key(Key::Char('8')) => {
+                if num_input(7, &mut window.checkboxes) {
+                    break;
+                }
+            },
+            Event::Key(Key::Char('9')) => {
+                if num_input(8, &mut window.checkboxes) {
+                    break;
+                }
+            },
+
             Event::Mouse(me) => {
                 let mut exit: bool = false;
 
                 match me {
                     MouseEvent::Press(_, mut x, mut y) => {
                         for i in 0..window.checkboxes.len() {
-                            write!(stdout, "{}Click Debug: {}, {} | {}, {} - {}, {} | {} ", termion::cursor::Goto(1, 3 + i as u16), x, y,
+                            /* write!(stdout, "{}Click Debug: {}, {} | {}, {} - {}, {} | {} ", termion::cursor::Goto(1, 3 + i as u16), x, y,
                                 window.checkboxes[i].collider.start_x, window.checkboxes[i].collider.start_y,
                                 window.checkboxes[i].collider.end_x, window.checkboxes[i].collider.end_y,
-                                window.checkboxes[i].collider.check(x as i32, y as i32)).unwrap();
+                                window.checkboxes[i].collider.check(x as i32, y as i32)).unwrap(); */
 
                             if window.checkboxes[i].collider.check(x as i32, y as i32) {
                                 if window.checkboxes[i].interact() {
@@ -297,13 +356,11 @@ fn main() {
     let mut args: Vec<String> = std::env::args().collect();
     args.remove(0);
 
-    println!("{:?}", args);
-
     let mut new_options = options::Options { color: true, styling: true };
     
     for a in &args {
         match a.as_str() {
-            "-h" | "--help" => return help(),
+            "-h" | "--help" => return crate::help::help(),
             "-v" | "--version" => return println!("{}", title()),
             "--no-color" => {
                 if new_options.styling {

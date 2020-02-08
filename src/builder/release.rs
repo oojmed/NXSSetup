@@ -78,7 +78,7 @@ pub fn get(repo: &str, path: &str, asset_index: usize) {
 
     let mut response = client.get(format!("https://api.github.com/repos/{}/releases/latest", repo).as_str()).send().unwrap().text().unwrap();
 
-    println!("{}", response);
+    // println!("{}", response);
 
     let json: Value = serde_json::from_str(response.as_str()).unwrap();
 

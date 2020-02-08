@@ -1,7 +1,7 @@
 #!/bin/sh
 
 major=0
-minor=2
+minor=3
 patch=0
 
 build=$(cat buildnumber)

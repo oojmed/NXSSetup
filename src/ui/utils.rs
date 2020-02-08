@@ -29,10 +29,8 @@ pub fn clear() {
     print!("{}", termion::cursor::Goto(1, 1));
 }
 
-pub fn center(text: &str, length: u16) -> String {
+pub fn center(text: &str, length: u16, cursor_y: u16) -> String {
     let (term_width, term_height) = termion::terminal_size().unwrap();
-
-    let (cursor_x, cursor_y) = crossterm::cursor::position().unwrap();
 
     return format!("{}{}", termion::cursor::Goto(term_width / 2 - (length / 2), cursor_y as u16), text);
 }
